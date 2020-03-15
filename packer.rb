@@ -36,6 +36,10 @@ when 'pack'
     FileUtils.mkdir_p(File.dirname(dest))
     FileUtils.cp(f, dest)
   end
+
+  FileUtils.cd("#{tmp_pack}/..") do
+    system("zip -qr #{environment}.zip *")
+  end
 when 'unpack'
 end
 
