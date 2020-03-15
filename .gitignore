@@ -1,2 +1,9 @@
-Packerfile
-Packs
+### Ignore tmp directory
+/.packer
+
+### Ignore these for development
+# Packerfile
+# Packs/
+
+### Ignore sample (unpacked items)
+/sample

@@ -1,0 +1,7 @@
+develop: &base
+  - sample/Secrets.swift
+  - sample/config/secrets.xcconfig
+
+release:
+  - *base
+  - sample/config/PackerService-Info.plist
