@@ -2,6 +2,7 @@
 require 'yaml'
 require 'fileutils'
 require 'openssl'
+require 'io/console'
 
 PACKS_DIR = "#{Dir.pwd}/Packs"
 PACKER_TMP_DIR = "#{Dir.pwd}/.packer"
@@ -64,4 +65,65 @@ when 'pack'
   FileUtils.mv("#{tmp_pack}.pack", "#{PACKS_DIR}")
   FileUtils.rm_rf(tmp_pack_dir)
 when 'unpack'
+  pack = "#{PACKS_DIR}/#{environment}.pack"
+  abort("File is not found:\n#{pack}") unless File.exists?(pack)
+
+  print "Password: "
+  password = STDIN.noecho(&:gets).chomp
+  print "\n\n"
+
+  tmp_pack_dir = "#{PACKER_TMP_DIR}/#{Time.now.to_i}"
+  tmp_pack = "#{tmp_pack_dir}/#{environment}"
+  FileUtils.mkdir_p(tmp_pack_dir)
+  FileUtils.cp(pack, tmp_pack_dir)
+
+  FileUtils.cd(tmp_pack_dir) do
+    cipher = OpenSSL::Cipher.new('aes-256-cbc')
+    cipher.decrypt
+    key_iv = OpenSSL::PKCS5.pbkdf2_hmac(password, 'salt', 2000, cipher.key_len + cipher.iv_len, 'sha256')
+    cipher.key = key_iv[0, cipher.key_len]
+    cipher.iv = key_iv[cipher.key_len, cipher.iv_len]
+
+    File.open("#{environment}.zip", 'wb') do |output|
+      File.open("#{environment}.pack", 'rb') do |input|
+        buff = buff || ""
+        while input.read(4096, buff)
+          output << cipher.update(buff)
+        end
+        begin
+          output << cipher.final
+        rescue OpenSSL::Cipher::CipherError => e
+          abort("Failed with error: #{e.message}")
+        end
+      end
+    end
+
+    system("unzip -q #{environment}.zip")
+  end
+
+  files = Dir["#{tmp_pack}/**/*"].reject { |f| File.directory?(f) }
+  files_to = files.map { |f| Dir.pwd + f.sub(tmp_pack, '') }
+
+  replacing_files = files_to.select { |f| File.exists?(f) }
+  unless replacing_files.empty?
+    print "#{replacing_files.count} files will be replaced:\n#{replacing_files.join("\n")}\n\n"
+    print "Replace files? [y/n]: "
+    loop do
+      answer = STDIN.noecho(&:gets).chomp
+      if %w(n no).include?(answer)
+        print "n\n"
+        exit 1
+      end
+      if %w(y yes).include?(answer)
+        print "y\n"
+        break
+      end
+    end
+  end
+
+  files.zip(files_to).each do |from, to|
+    FileUtils.mkdir_p(File.dirname(to))
+    FileUtils.cp(from, to)
+  end
+  FileUtils.rm_rf(tmp_pack_dir)
 end
