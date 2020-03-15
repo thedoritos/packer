@@ -64,5 +64,3 @@ when 'pack'
   FileUtils.mv("#{tmp_pack}.pack", "#{PACKS_DIR}")
 when 'unpack'
 end
-
-p config[environment]
