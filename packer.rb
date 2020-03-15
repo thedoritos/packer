@@ -32,8 +32,8 @@ when 'pack'
   print "Password: "
   password = STDIN.gets.chomp
 
-  tmp_pack = "#{PACKER_TMP_DIR}/#{Time.now.to_i}/#{environment}"
-  FileUtils.rm_rf(tmp_pack)
+  tmp_pack_dir = "#{PACKER_TMP_DIR}/#{Time.now.to_i}"
+  tmp_pack = "#{tmp_pack_dir}/#{environment}"
   files.each do |f|
     dest = tmp_pack + f.sub(Dir.pwd, '')
     FileUtils.mkdir_p(File.dirname(dest))
@@ -62,5 +62,6 @@ when 'pack'
 
   FileUtils.mkdir_p(PACKS_DIR)
   FileUtils.mv("#{tmp_pack}.pack", "#{PACKS_DIR}")
+  FileUtils.rm_rf(tmp_pack_dir)
 when 'unpack'
 end
