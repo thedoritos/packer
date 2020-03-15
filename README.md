@@ -1,4 +1,4 @@
-# Packer - Pack you configuration
+# Packer - Pack your configuration
 
 ## Quick Start
 
