@@ -35,7 +35,7 @@ when 'pack'
   tmp_pack = "#{PACKER_TMP_DIR}/#{Time.now.to_i}/#{environment}"
   FileUtils.rm_rf(tmp_pack)
   files.each do |f|
-    dest = "#{tmp_pack}/#{f.sub(Dir.pwd, '').sub('/', '')}"
+    dest = tmp_pack + f.sub(Dir.pwd, '')
     FileUtils.mkdir_p(File.dirname(dest))
     FileUtils.cp(f, dest)
   end
