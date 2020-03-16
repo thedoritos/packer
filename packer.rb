@@ -3,6 +3,18 @@ require 'yaml'
 require 'fileutils'
 require 'openssl'
 require 'io/console'
+require 'optparse'
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: packer.rb command environment [options]"
+  opts.on("-p:", "--password:", "Password for encryption/decryption") do |v|
+    options[:password] = v
+  end
+  opts.on("-f", "--force-replace", "Force to replace existing files") do |v|
+    options[:force_replace] = v
+  end
+end.parse!
 
 PACKS_DIR = "#{Dir.pwd}/Packs"
 PACKER_TMP_DIR = "#{Dir.pwd}/.packer"
@@ -30,8 +42,11 @@ when 'pack'
   missing_files = files.reject { |f| File.exists?(f) }
   abort("#{missing_files.count} files are not found:\n#{missing_files.join("\n")}") unless missing_files.empty?
 
-  print "Password: "
-  password = STDIN.gets.chomp
+  password = options[:password]
+  unless password
+    print "Password: "
+    password = STDIN.gets.chomp
+  end
 
   tmp_pack_dir = "#{PACKER_TMP_DIR}/#{Time.now.to_i}"
   tmp_pack = "#{tmp_pack_dir}/#{environment}"
@@ -68,9 +83,12 @@ when 'unpack'
   pack = "#{PACKS_DIR}/#{environment}.pack"
   abort("File is not found:\n#{pack}") unless File.exists?(pack)
 
-  print "Password: "
-  password = STDIN.noecho(&:gets).chomp
-  print "\n\n"
+  password = options[:password]
+  unless password
+    print "Password: "
+    password = STDIN.noecho(&:gets).chomp
+    print "\n\n"
+  end
 
   tmp_pack_dir = "#{PACKER_TMP_DIR}/#{Time.now.to_i}"
   tmp_pack = "#{tmp_pack_dir}/#{environment}"
@@ -104,19 +122,21 @@ when 'unpack'
   files = Dir["#{tmp_pack}/**/*"].reject { |f| File.directory?(f) }
   files_to = files.map { |f| Dir.pwd + f.sub(tmp_pack, '') }
 
-  replacing_files = files_to.select { |f| File.exists?(f) }
-  unless replacing_files.empty?
-    print "#{replacing_files.count} files will be replaced:\n#{replacing_files.join("\n")}\n\n"
-    print "Replace files? [y/n]: "
-    loop do
-      answer = STDIN.noecho(&:gets).chomp
-      if %w(n no).include?(answer)
-        print "n\n"
-        exit 1
-      end
-      if %w(y yes).include?(answer)
-        print "y\n"
-        break
+  unless options[:force_replace]
+    replacing_files = files_to.select { |f| File.exists?(f) }
+    unless replacing_files.empty?
+      print "#{replacing_files.count} files will be replaced:\n#{replacing_files.join("\n")}\n\n"
+      print "Replace files? [y/n]: "
+      loop do
+        answer = STDIN.noecho(&:gets).chomp
+        if %w(n no).include?(answer)
+          print "n\n"
+          exit 1
+        end
+        if %w(y yes).include?(answer)
+          print "y\n"
+          break
+        end
       end
     end
   end
