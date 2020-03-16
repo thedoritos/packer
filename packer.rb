@@ -42,8 +42,11 @@ when 'pack'
   missing_files = files.reject { |f| File.exists?(f) }
   abort("#{missing_files.count} files are not found:\n#{missing_files.join("\n")}") unless missing_files.empty?
 
-  print "Password: "
-  password = STDIN.gets.chomp
+  password = options[:password]
+  unless password
+    print "Password: "
+    password = STDIN.gets.chomp
+  end
 
   tmp_pack_dir = "#{PACKER_TMP_DIR}/#{Time.now.to_i}"
   tmp_pack = "#{tmp_pack_dir}/#{environment}"
@@ -80,9 +83,12 @@ when 'unpack'
   pack = "#{PACKS_DIR}/#{environment}.pack"
   abort("File is not found:\n#{pack}") unless File.exists?(pack)
 
-  print "Password: "
-  password = STDIN.noecho(&:gets).chomp
-  print "\n\n"
+  password = options[:password]
+  unless password
+    print "Password: "
+    password = STDIN.noecho(&:gets).chomp
+    print "\n\n"
+  end
 
   tmp_pack_dir = "#{PACKER_TMP_DIR}/#{Time.now.to_i}"
   tmp_pack = "#{tmp_pack_dir}/#{environment}"
