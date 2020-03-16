@@ -3,6 +3,18 @@ require 'yaml'
 require 'fileutils'
 require 'openssl'
 require 'io/console'
+require 'optparse'
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: packer.rb command environment [options]"
+  opts.on("-p:", "--password:", "Password for encryption/decryption") do |v|
+    options[:password] = v
+  end
+  opts.on("-f", "--force-replace", "Force to replace existing files") do |v|
+    options[:force_replace] = v
+  end
+end.parse!
 
 PACKS_DIR = "#{Dir.pwd}/Packs"
 PACKER_TMP_DIR = "#{Dir.pwd}/.packer"
