@@ -122,19 +122,21 @@ when 'unpack'
   files = Dir["#{tmp_pack}/**/*"].reject { |f| File.directory?(f) }
   files_to = files.map { |f| Dir.pwd + f.sub(tmp_pack, '') }
 
-  replacing_files = files_to.select { |f| File.exists?(f) }
-  unless replacing_files.empty?
-    print "#{replacing_files.count} files will be replaced:\n#{replacing_files.join("\n")}\n\n"
-    print "Replace files? [y/n]: "
-    loop do
-      answer = STDIN.noecho(&:gets).chomp
-      if %w(n no).include?(answer)
-        print "n\n"
-        exit 1
-      end
-      if %w(y yes).include?(answer)
-        print "y\n"
-        break
+  unless options[:force_replace]
+    replacing_files = files_to.select { |f| File.exists?(f) }
+    unless replacing_files.empty?
+      print "#{replacing_files.count} files will be replaced:\n#{replacing_files.join("\n")}\n\n"
+      print "Replace files? [y/n]: "
+      loop do
+        answer = STDIN.noecho(&:gets).chomp
+        if %w(n no).include?(answer)
+          print "n\n"
+          exit 1
+        end
+        if %w(y yes).include?(answer)
+          print "y\n"
+          break
+        end
       end
     end
   end
